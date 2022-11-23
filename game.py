@@ -4,6 +4,9 @@ import sha1
 import matplotlib.pylab as plt
 from dotenv import dotenv_values
 
+globaltaps=[1,0,1,0,0,0,1,0,0,1]
+#The taps for a hardware lfsr can usually be found and how many bits are there in the lfsr
+
 class Lfsr:
     
     def __init__(self,state,taps) -> None:
@@ -14,6 +17,7 @@ class Lfsr:
         self.out=self.state[-1]
 
     def next(self):
+        # print(self.state)
         self.out= self.state[-1]
         self.history=[self.out]+self.history
         
@@ -23,7 +27,9 @@ class Lfsr:
         temp=0
 
         for i in range(len(self.taps)):
-            temp=temp^self.state[i]
+            if self.taps[i]==1:
+                temp=temp^self.state[i]
+            # temp=temp^self.state[i]
 
         self.state[0]=temp
 
@@ -32,14 +38,15 @@ class Lfsr:
         return self.history
 
     def showState(self):
+        print(self.state)
         return self.state
 
 class Game:
 
 
     def __init__(self) -> None:
-        # self.state=np.random.randint(2,size=10)
-        self.temp= np.random.randint(2,size=10)
+        
+        self.temp= globaltaps
         self.privatekey=dotenv_values("./.env")["PRIVATE_KEY"]
         self.nonce=0
         self.hash=sha1.sha1(self.privatekey+str(self.nonce))
@@ -58,39 +65,35 @@ class Game:
 
     def play(self):
         
-        self.clienthash=sha1.sha1(input("Enter your private key to hash and store \n"))
+        self.clienthash=sha1.sha1(input("Enter the client seed to hash and store \n"))
         print(self.clienthash)
 
         checkrandomness(self.state)
 
         self.hash=sha1.sha1(self.privatekey+str(self.nonce))
         state=self.state
-        temp=[0,0,1,0,1,0,0,1,1,1]
-        
-        taps=[]
-        for i,j in enumerate(temp):
-            if j==1:
-                taps.append(i)
-        
-
+              
+        taps=globaltaps
         lfsr=Lfsr(state,taps)
         
         self.updateState()
         
         [lfsr.next() for i in range(10)]
 
-        randomVal=lfsr.history
+        randomVal=lfsr.state
+        print("state",lfsr.history,lfsr.state)
+        
         randomVal=list(map((lambda x: str(x)),randomVal))
         randomVal="".join(randomVal)
         
         randomVal=int(randomVal,2)
 
-        randomVal=round(randomVal/1024*1000)       
+        randomVal=round(randomVal)       
 
         self.result=randomVal
         self.secondhash=sha1.sha1(self.hash+self.clienthash+str(randomVal))
 
-        print("\n\nThis is the hash of the result",self.secondhash)
+        print("\n\nThis is the final Hash",self.secondhash)
         # print("\nThis is the serverside hash",self.hash)
         # print("\nThis is the clientside hash",self.clienthash)
 
@@ -141,7 +144,7 @@ def checkrandomness(state):
 
     # state=[1,0,0,0,1,0,0,0,1,0]
     state=state
-    taps=[0,0,1,0,1,0,0,1,1,1]
+    taps=globaltaps
 
     print(state,taps)
     l=Lfsr(state,taps)
@@ -152,6 +155,7 @@ def checkrandomness(state):
         arr=arr+[list(l.state)]
     nums=[]
     
+
     for i in arr:
         randomVal=i
         randomVal=list(map((lambda x: str(x)),randomVal))
@@ -192,12 +196,17 @@ def checkrandomness(state):
 
     x, y = zip(*lists) # unpack a list of pairs into two tuples
 
-    plt.plot(x, y)
-    plt.show()
+    # plt.plot(x, y)
+    # plt.show()
 
 if __name__=='__main__':
     
     game=Game()
+    # l=Lfsr([0, 0, 1, 0, 1, 0, 1, 0, 0, 0],globaltaps)
+
+    # for i in range(10):
+    #     l.next()
+    #     l.showState()
 
 
 
