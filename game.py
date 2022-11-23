@@ -4,9 +4,6 @@ import sha1
 import matplotlib.pylab as plt
 from dotenv import dotenv_values
 
-
-
-
 class Lfsr:
     
     def __init__(self,state,taps) -> None:
@@ -41,18 +38,32 @@ class Game:
 
 
     def __init__(self) -> None:
-        self.state=np.random.randint(2,size=10)
+        # self.state=np.random.randint(2,size=10)
         self.temp= np.random.randint(2,size=10)
         self.privatekey=dotenv_values("./.env")["PRIVATE_KEY"]
         self.nonce=0
         self.hash=sha1.sha1(self.privatekey+str(self.nonce))
 
+        self.updateState()
         self.play()
 
+    def updateState(self):
+        temp_str = self.hash
+        res = ''.join(format(ord(i), '08b') for i in temp_str)
+
+        seed=[]
+        for i in range(10):
+            seed.append(int(res[i]))
+        self.state=seed
+
     def play(self):
+        
+
+        checkrandomness(self.state)
+
         self.hash=sha1.sha1(self.privatekey+str(self.nonce))
         state=self.state
-        temp=self.temp
+        temp=[0,0,1,0,1,0,0,1,1,1]
         
         taps=[]
         for i,j in enumerate(temp):
@@ -61,12 +72,13 @@ class Game:
         
 
         lfsr=Lfsr(state,taps)
-        self.state=state
+        
+        self.updateState()
         
         [lfsr.next() for i in range(10)]
 
         randomVal=lfsr.history
-        randomVal=list(map((lambda x: str(x.item())),randomVal))
+        randomVal=list(map((lambda x: str(x)),randomVal))
         randomVal="".join(randomVal)
         
         randomVal=int(randomVal,2)
@@ -77,14 +89,16 @@ class Game:
         self.secondhash=sha1.sha1(self.hash+str(randomVal))
 
         print("\n\nThis is the hash of the result",self.secondhash)
-        
+        print("\nAnd this is the serverside hash",self.hash)
+
+    
         self.nonce+=1
         self.prompt()
 
 
 
     def prompt(self):
-        print("\n\nWelcome to the Crypto Casino\nPlease choose a 3 numbers")
+        print("\n\nWelcome to the Crypto Casino\nPlease choose a number from 0 to 1024")
         self.guess=input()
 
         self.evaluate()
@@ -120,9 +134,12 @@ class Game:
             pass
 
 
-def checkrandomness():
-    state=np.random.randint(2,size=10)
-    taps=np.random.randint(2,size=10)
+def checkrandomness(state):
+
+    # state=[1,0,0,0,1,0,0,0,1,0]
+    state=state
+    taps=[0,0,1,0,1,0,0,1,1,1]
+
     print(state,taps)
     l=Lfsr(state,taps)
     arr=[]
@@ -134,12 +151,12 @@ def checkrandomness():
     
     for i in arr:
         randomVal=i
-        randomVal=list(map((lambda x: str(x.item())),randomVal))
+        randomVal=list(map((lambda x: str(x)),randomVal))
         randomVal="".join(randomVal)
         
         randomVal=int(randomVal,2)
 
-        randomVal=round(randomVal/1024*1000)   
+        randomVal=round(randomVal)   
 
         nums.append(randomVal)
     
@@ -155,17 +172,30 @@ def checkrandomness():
             d[i]=0
     
     lists = sorted(d.items()) # sorted by key, return a list of tuples
-    print(lists)
+    
+    # print(lists)
+
+    m=max(d.values())
+
+    print("These are the most occuring values")
+
+    vals=[]
+    for i in lists:
+        if i[1]==m:
+            vals.append(i[0])
+
+    print("Select from the following values")
+    print(vals)
+
     x, y = zip(*lists) # unpack a list of pairs into two tuples
 
     plt.plot(x, y)
     plt.show()
 
-
-
 if __name__=='__main__':
-    checkrandomness()
+    
     game=Game()
+
 
 
         
