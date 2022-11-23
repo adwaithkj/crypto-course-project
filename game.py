@@ -49,9 +49,9 @@ class Game:
         self.temp= globaltaps
         self.privatekey=dotenv_values("./.env")["PRIVATE_KEY"]
         self.nonce=0
-        self.hash=sha1.sha1(self.privatekey+str(self.nonce))
+        # self.hash=sha1.sha1(self.privatekey+str(self.nonce))
 
-        self.updateState()
+        # self.updateState()
         self.play()
 
     def updateState(self):
@@ -68,15 +68,16 @@ class Game:
         self.clienthash=sha1.sha1(input("Enter the client seed to hash and store \n"))
         print(self.clienthash)
 
-        checkrandomness(self.state)
+        self.hash=sha1.sha1(self.privatekey+self.clienthash+str(self.nonce))
 
-        self.hash=sha1.sha1(self.privatekey+str(self.nonce))
-        state=self.state
-              
+
         taps=globaltaps
-        lfsr=Lfsr(state,taps)
         
         self.updateState()
+        state=self.state
+        checkrandomness(self.state)
+
+        lfsr=Lfsr(state,taps)
         
         [lfsr.next() for i in range(10)]
 
