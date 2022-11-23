@@ -58,6 +58,8 @@ class Game:
 
     def play(self):
         
+        self.clienthash=sha1.sha1(input("Enter your private key to hash and store \n"))
+        print(self.clienthash)
 
         checkrandomness(self.state)
 
@@ -86,10 +88,11 @@ class Game:
         randomVal=round(randomVal/1024*1000)       
 
         self.result=randomVal
-        self.secondhash=sha1.sha1(self.hash+str(randomVal))
+        self.secondhash=sha1.sha1(self.hash+self.clienthash+str(randomVal))
 
         print("\n\nThis is the hash of the result",self.secondhash)
-        print("\nAnd this is the serverside hash",self.hash)
+        # print("\nThis is the serverside hash",self.hash)
+        # print("\nThis is the clientside hash",self.clienthash)
 
     
         self.nonce+=1
@@ -120,7 +123,7 @@ class Game:
         else:
             pass
     def raiseDispute(self):
-        print("The server side hash is",self.hash,"and the hash is sha1 (",self.hash,"+" , str(self.result)+")" )
+        print("The server side hash is",self.hash,"\nThe client side hash is",self.clienthash,"\nand the hash is sha1 (",self.hash,"+", self.clienthash,"+", str(self.result)+")" )
 
         print("Press p to play again, d to raise dispute")
 
